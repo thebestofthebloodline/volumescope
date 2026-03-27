@@ -12,28 +12,29 @@ import { NewTokensFeed } from "@/components/NewTokensFeed";
 import { usePumpPortal } from "@/hooks/usePumpPortal";
 import { useCountdown } from "@/hooks/useCountdown";
 import { getVolumeLevel } from "@/lib/types";
+import { filterTradesByRange, getVolumeForRange } from "@/lib/utils";
+import type { TimeRange, PlatformStats } from "@/lib/types";
 
 export default function Home() {
   const { trades, newTokens, connected, tradesPerMin, tokensPerHour } =
     usePumpPortal();
   const { isLive, countdown, liveRemaining } = useCountdown();
 
-  const [solPrice, setSolPrice] = useState(0);
-  const [volume24h, setVolume24h] = useState(0);
+  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [chartData, setChartData] = useState<number[]>([]);
   const [heatmapData, setHeatmapData] = useState<number[]>(
     new Array(24).fill(0)
   );
   const chartIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch stats (SOL price + 24h volume)
+  // Fetch platform stats from DefiLlama API
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await fetch("/api/stats");
         const data = await res.json();
-        if (data.solPrice) setSolPrice(data.solPrice);
-        if (data.pumpfunVolume24h) setVolume24h(data.pumpfunVolume24h);
+        setPlatformStats(data);
       } catch {}
     };
 
@@ -68,14 +69,24 @@ export default function Home() {
   }, [trades.length, tradesPerMin]);
 
   const volumeLevel = getVolumeLevel(tradesPerMin);
+  const solPrice = platformStats?.solPrice ?? 0;
 
-  // Add live volume to baseline 24h volume
+  // Filter trades by selected time range
+  const filteredTrades = filterTradesByRange(trades, timeRange);
+
+  // Compute displayed volume
+  const defiLlamaVolume = getVolumeForRange(platformStats, timeRange);
   const liveVolumeUSD =
-    trades.reduce((sum, t) => sum + t.sol_amount, 0) * solPrice;
-  const totalVolume = volume24h + liveVolumeUSD;
+    filteredTrades.reduce((sum, t) => sum + t.sol_amount, 0) * solPrice;
+
+  // For sub-24h ranges, use only live trades. For 24h+, use DefiLlama + live.
+  const isSubDay = ["5m", "30m", "1h", "4h"].includes(timeRange);
+  const displayVolume = isSubDay ? liveVolumeUSD : defiLlamaVolume + liveVolumeUSD;
+
+  const volumeChange = platformStats?.combinedChange1d ?? 0;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative z-10">
       <Navbar connected={connected} isLive={isLive} />
 
       <main className="flex-1 mx-auto w-full max-w-[1400px] px-4 sm:px-6 py-6 space-y-5">
@@ -86,26 +97,32 @@ export default function Home() {
         />
 
         <StatsBar
-          volume24h={totalVolume}
+          volume={displayVolume}
+          volumeChange={volumeChange}
           tradesPerMin={tradesPerMin}
           tokensPerHour={tokensPerHour}
           solPrice={solPrice}
           volumeLevel={volumeLevel}
+          timeRange={timeRange}
         />
 
-        <VolumeChart dataPoints={chartData} />
+        <VolumeChart
+          dataPoints={chartData}
+          timeRange={timeRange}
+          onTimeRangeChange={setTimeRange}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <LiveFeed trades={trades} />
+          <LiveFeed trades={filteredTrades} />
           <VolumeHeatmap tradeHistory={heatmapData} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <TopMovers trades={trades} />
+          <TopMovers trades={filteredTrades} />
           <NewTokensFeed tokens={newTokens} />
         </div>
 
-        <footer className="border-t border-border pt-5 pb-6 text-center">
+        <footer className="border-t border-border/40 pt-5 pb-6 text-center">
           <p className="text-[11px] text-dim">
             Volumescope &middot; Real-time PumpFun volume tracker
           </p>

@@ -1,12 +1,16 @@
 "use client";
 
 import { useRef, useEffect, useCallback } from "react";
+import { TimeRangeSelector } from "./TimeRangeSelector";
+import type { TimeRange } from "@/lib/types";
 
 interface VolumeChartProps {
   dataPoints: number[];
+  timeRange: TimeRange;
+  onTimeRangeChange: (range: TimeRange) => void;
 }
 
-export function VolumeChart({ dataPoints }: VolumeChartProps) {
+export function VolumeChart({ dataPoints, timeRange, onTimeRangeChange }: VolumeChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const draw = useCallback(() => {
@@ -36,14 +40,14 @@ export function VolumeChart({ dataPoints }: VolumeChartProps) {
     // Grid lines
     for (let i = 0; i <= 4; i++) {
       const y = padding.top + (chartH / 4) * i;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(padding.left, y);
       ctx.lineTo(w - padding.right, y);
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
       ctx.font = "10px monospace";
       ctx.textAlign = "right";
       const val = Math.round(max - (max / 4) * i);
@@ -54,7 +58,7 @@ export function VolumeChart({ dataPoints }: VolumeChartProps) {
 
     const step = chartW / (data.length - 1);
 
-    // Area fill
+    // Area fill with OKLCH-matched accent
     ctx.beginPath();
     ctx.moveTo(padding.left, padding.top + chartH);
 
@@ -82,7 +86,7 @@ export function VolumeChart({ dataPoints }: VolumeChartProps) {
       0,
       padding.top + chartH
     );
-    gradient.addColorStop(0, "rgba(16, 185, 129, 0.15)");
+    gradient.addColorStop(0, "rgba(16, 185, 129, 0.12)");
     gradient.addColorStop(1, "rgba(16, 185, 129, 0)");
     ctx.fillStyle = gradient;
     ctx.fill();
@@ -108,10 +112,15 @@ export function VolumeChart({ dataPoints }: VolumeChartProps) {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // End dot
+    // End dot with glow
     const lastX = padding.left + step * (data.length - 1);
     const lastY =
       padding.top + chartH - (data[data.length - 1] / max) * chartH;
+
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(16, 185, 129, 0.15)";
+    ctx.fill();
 
     ctx.beginPath();
     ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
@@ -119,7 +128,7 @@ export function VolumeChart({ dataPoints }: VolumeChartProps) {
     ctx.fill();
 
     // Time labels
-    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
     ctx.font = "10px monospace";
     ctx.textAlign = "center";
     const labelCount = Math.min(6, data.length);
@@ -139,12 +148,12 @@ export function VolumeChart({ dataPoints }: VolumeChartProps) {
   }, [draw]);
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="glass-card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] text-muted">
+        <span className="text-[11px] text-muted uppercase tracking-wider">
           Trades per minute
         </span>
-        <span className="text-[11px] text-dim">real-time</span>
+        <TimeRangeSelector value={timeRange} onChange={onTimeRangeChange} />
       </div>
       <canvas
         ref={canvasRef}

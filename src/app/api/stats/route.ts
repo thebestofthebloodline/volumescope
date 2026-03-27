@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
+import type { PlatformStats, DefiLlamaVolume } from "@/lib/types";
 
-interface CacheEntry {
-  solPrice: number;
-  pumpfunVolume24h: number;
-  timestamp: number;
-}
-
-let cache: CacheEntry | null = null;
+let cache: { data: PlatformStats; timestamp: number } | null = null;
 const CACHE_TTL = 30_000;
+
+const EMPTY_VOLUME: DefiLlamaVolume = {
+  total24h: 0,
+  total48hto24h: 0,
+  total7d: 0,
+  total30d: 0,
+  change_1d: 0,
+  change_7d: 0,
+  change_1m: 0,
+};
 
 async function fetchSolPrice(): Promise<number> {
   try {
@@ -32,56 +37,75 @@ async function fetchSolPrice(): Promise<number> {
   return 140;
 }
 
-async function fetchPumpFunVolume(solPrice: number): Promise<number> {
-  // Fetch top PumpFun tokens from DexScreener to estimate platform volume
+async function fetchDefiLlamaVolume(protocol: string): Promise<DefiLlamaVolume> {
   try {
     const res = await fetch(
-      "https://api.dexscreener.com/token-boosts/top/v1",
+      `https://api.llama.fi/summary/dexs/${protocol}`,
       { cache: "no-store" }
     );
     const data = await res.json();
 
-    // Sum volume from Solana tokens (most will be PumpFun)
-    let totalVol = 0;
-    if (Array.isArray(data)) {
-      for (const token of data) {
-        if (token.chainId === "solana" && token.tokenAddress) {
-          totalVol += token.totalAmount || 0;
-        }
-      }
-    }
-
-    // This is a rough estimate; multiply to approximate full platform
-    if (totalVol > 0) return totalVol * solPrice * 8;
-  } catch {}
-
-  // Fallback: use a reasonable estimate based on known PumpFun daily volumes
-  return 45_000_000;
+    return {
+      total24h: data.total24h ?? 0,
+      total48hto24h: data.total48hto24h ?? 0,
+      total7d: data.total7d ?? 0,
+      total30d: data.total30d ?? 0,
+      change_1d: data.change_1d ?? 0,
+      change_7d: data.change_7d ?? 0,
+      change_1m: data.change_1m ?? 0,
+    };
+  } catch {
+    return { ...EMPTY_VOLUME };
+  }
 }
 
 export async function GET() {
   const now = Date.now();
 
   if (cache && now - cache.timestamp < CACHE_TTL) {
-    return NextResponse.json(cache);
+    return NextResponse.json(cache.data);
   }
 
   try {
-    const solPrice = await fetchSolPrice();
-    const pumpfunVolume24h = await fetchPumpFunVolume(solPrice);
+    const [solPrice, pumpfun, pumpswap] = await Promise.all([
+      fetchSolPrice(),
+      fetchDefiLlamaVolume("pump.fun"),
+      fetchDefiLlamaVolume("pumpswap"),
+    ]);
 
-    cache = {
+    const combined24h = pumpfun.total24h + pumpswap.total24h;
+    const combined7d = pumpfun.total7d + pumpswap.total7d;
+
+    // Weighted average of change_1d based on each platform's contribution
+    const totalPrev24h =
+      (pumpfun.total48hto24h || pumpfun.total24h) +
+      (pumpswap.total48hto24h || pumpswap.total24h);
+    const combinedChange1d = totalPrev24h > 0
+      ? ((combined24h - totalPrev24h) / totalPrev24h) * 100
+      : 0;
+
+    const stats: PlatformStats = {
+      pumpfun,
+      pumpswap,
+      combined24h,
+      combined7d,
+      combinedChange1d,
       solPrice,
-      pumpfunVolume24h,
       timestamp: now,
     };
 
-    return NextResponse.json(cache);
+    cache = { data: stats, timestamp: now };
+    return NextResponse.json(stats);
   } catch {
-    return NextResponse.json({
+    const fallback: PlatformStats = {
+      pumpfun: { ...EMPTY_VOLUME, total24h: 30_000_000 },
+      pumpswap: { ...EMPTY_VOLUME, total24h: 15_000_000 },
+      combined24h: 45_000_000,
+      combined7d: 315_000_000,
+      combinedChange1d: 0,
       solPrice: 140,
-      pumpfunVolume24h: 45_000_000,
       timestamp: now,
-    });
+    };
+    return NextResponse.json(fallback);
   }
 }

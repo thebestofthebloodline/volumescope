@@ -1,3 +1,5 @@
+import type { TimeRange, Trade, PlatformStats } from "./types";
+
 export function formatNumber(n: number): string {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + "B";
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + "M";
@@ -9,9 +11,58 @@ export function formatUSD(n: number): string {
   return "$" + formatNumber(n);
 }
 
+export function formatCompactUSD(n: number): string {
+  if (n >= 1_000_000_000) return "$" + (n / 1_000_000_000).toFixed(1) + "B";
+  if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return "$" + (n / 1_000).toFixed(1) + "K";
+  return "$" + n.toFixed(0);
+}
+
+export function formatDelta(pct: number): string {
+  const sign = pct >= 0 ? "+" : "";
+  return sign + pct.toFixed(1) + "%";
+}
+
 export function shortenAddress(addr: string): string {
   if (!addr || addr.length < 8) return addr;
   return addr.slice(0, 4) + "..." + addr.slice(-4);
+}
+
+export function getTimeRangeMs(range: TimeRange): number {
+  const map: Record<TimeRange, number> = {
+    "5m": 5 * 60_000,
+    "30m": 30 * 60_000,
+    "1h": 60 * 60_000,
+    "4h": 4 * 60 * 60_000,
+    "24h": 24 * 60 * 60_000,
+    "2d": 2 * 24 * 60 * 60_000,
+    "1w": 7 * 24 * 60 * 60_000,
+  };
+  return map[range];
+}
+
+export function filterTradesByRange(trades: Trade[], range: TimeRange): Trade[] {
+  const cutoff = Date.now() - getTimeRangeMs(range);
+  return trades.filter((t) => t.timestamp >= cutoff);
+}
+
+export function getVolumeForRange(stats: PlatformStats | null, range: TimeRange): number {
+  if (!stats) return 0;
+  switch (range) {
+    case "5m":
+    case "30m":
+    case "1h":
+    case "4h":
+      // Sub-24h ranges use live trade data, not DefiLlama
+      return 0;
+    case "24h":
+      return stats.combined24h;
+    case "2d":
+      // Approximate: 24h * 2
+      return stats.combined24h * 2;
+    case "1w":
+      return stats.combined7d;
+  }
 }
 
 export function getNextMondayEST(): Date {

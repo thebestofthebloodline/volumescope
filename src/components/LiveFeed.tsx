@@ -12,9 +12,9 @@ export function LiveFeed({ trades }: LiveFeedProps) {
   const displayTrades = trades.slice(0, 50);
 
   return (
-    <div className="rounded-xl border border-border bg-surface flex flex-col h-[380px]">
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border">
-        <span className="text-[11px] text-muted">Live trades</span>
+    <div className="glass-card flex flex-col h-[380px]">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40">
+        <span className="text-[11px] text-muted uppercase tracking-wider">Live trades</span>
         <div className="flex items-center gap-1.5">
           <div className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />
           <span className="text-[11px] text-dim">streaming</span>
@@ -29,10 +29,14 @@ export function LiveFeed({ trades }: LiveFeedProps) {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center gap-2 px-2 sm:px-3 py-[7px] border-b border-border-subtle text-xs"
+              className="flex items-center gap-2 px-2 sm:px-3 py-[7px] border-b border-border-subtle/50 text-xs transition-colors hover:bg-surface-hover/40 rounded-md"
             >
               <span
-                className={`font-mono font-medium w-8 ${trade.is_buy ? "text-accent" : "text-negative"}`}
+                className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                  trade.is_buy
+                    ? "bg-accent/15 text-accent"
+                    : "bg-negative/15 text-negative"
+                }`}
               >
                 {trade.is_buy ? "BUY" : "SELL"}
               </span>

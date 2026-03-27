@@ -15,7 +15,7 @@ function DigitBox({ value }: { value: string }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="w-[42px] sm:w-[56px] md:w-[68px] h-[54px] sm:h-[68px] md:h-[84px] rounded-lg bg-surface border border-border flex items-center justify-center"
+      className="glass-card w-[42px] sm:w-[56px] md:w-[68px] h-[54px] sm:h-[68px] md:h-[84px] flex items-center justify-center"
     >
       <span className="font-mono text-2xl sm:text-4xl md:text-5xl font-semibold text-foreground tabular-nums leading-none">
         {value}
@@ -48,7 +48,7 @@ function TimeUnit({
 function Colon() {
   return (
     <div className="flex items-center justify-center pb-6 px-1">
-      <span className="text-2xl sm:text-3xl md:text-4xl font-light text-dim select-none">
+      <span className="text-2xl sm:text-3xl md:text-4xl font-light text-dim select-none colon-pulse">
         :
       </span>
     </div>
@@ -72,7 +72,7 @@ export function Countdown({
             className="flex flex-col items-center gap-6"
           >
             <div className="flex items-center gap-2.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-accent live-dot" />
+              <div className="h-2.5 w-2.5 rounded-full bg-accent glow-pulse" />
               <span className="text-xl sm:text-2xl font-semibold text-foreground">
                 Memescope Monday is live
               </span>

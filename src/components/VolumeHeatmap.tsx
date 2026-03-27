@@ -23,9 +23,9 @@ export function VolumeHeatmap({ tradeHistory }: VolumeHeatmapProps) {
   }, [tradeHistory]);
 
   return (
-    <div className="rounded-xl border border-border bg-surface flex flex-col h-[380px]">
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border">
-        <span className="text-[11px] text-muted">Volume heatmap (24h)</span>
+    <div className="glass-card flex flex-col h-[380px]">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40">
+        <span className="text-[11px] text-muted uppercase tracking-wider">Volume heatmap (24h)</span>
         <span className="text-[11px] text-dim">hourly</span>
       </div>
 
@@ -34,14 +34,14 @@ export function VolumeHeatmap({ tradeHistory }: VolumeHeatmapProps) {
           {grid.map((cell) => (
             <div
               key={cell.hour}
-              className="rounded-md flex flex-col items-center justify-center border border-border-subtle transition-colors duration-700"
+              className="rounded-lg flex flex-col items-center justify-center border border-border-subtle/40 transition-all duration-700 hover:border-accent/30 hover:scale-[1.02]"
               style={{
                 backgroundColor:
                   cell.intensity < 0.05
                     ? "transparent"
-                    : `rgba(16, 185, 129, ${cell.intensity * 0.25})`,
+                    : `oklch(0.72 0.19 160 / ${cell.intensity * 0.20})`,
               }}
-              title={`${String(cell.hour).padStart(2, "0")}:00 UTC \u2014 ${cell.value} trades/min`}
+              title={`${String(cell.hour).padStart(2, "0")}:00 UTC - ${cell.value} trades/min`}
             >
               <span className="text-[10px] text-dim font-mono">
                 {String(cell.hour).padStart(2, "0")}
@@ -52,7 +52,7 @@ export function VolumeHeatmap({ tradeHistory }: VolumeHeatmapProps) {
                   color:
                     cell.intensity < 0.05
                       ? "var(--dim)"
-                      : `rgba(16, 185, 129, ${0.4 + cell.intensity * 0.6})`,
+                      : `oklch(0.72 0.19 160 / ${0.5 + cell.intensity * 0.5})`,
                 }}
               >
                 {cell.value}
@@ -70,7 +70,7 @@ export function VolumeHeatmap({ tradeHistory }: VolumeHeatmapProps) {
               key={v}
               className="w-5 h-1.5 rounded-sm"
               style={{
-                backgroundColor: `rgba(16, 185, 129, ${v * 0.35})`,
+                backgroundColor: `oklch(0.72 0.19 160 / ${v * 0.30})`,
               }}
             />
           ))}

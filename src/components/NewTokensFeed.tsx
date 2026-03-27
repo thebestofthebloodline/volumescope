@@ -12,9 +12,9 @@ export function NewTokensFeed({ tokens }: NewTokensFeedProps) {
   const display = tokens.slice(0, 30);
 
   return (
-    <div className="rounded-xl border border-border bg-surface flex flex-col h-[300px]">
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border">
-        <span className="text-[11px] text-muted">New tokens</span>
+    <div className="glass-card flex flex-col h-[300px]">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40">
+        <span className="text-[11px] text-muted uppercase tracking-wider">New tokens</span>
         <span className="text-[11px] text-dim">launches</span>
       </div>
 
@@ -26,9 +26,9 @@ export function NewTokensFeed({ tokens }: NewTokensFeedProps) {
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.12 }}
-              className="flex items-center gap-2 px-2 sm:px-3 py-[7px] border-b border-border-subtle text-xs"
+              className="flex items-center gap-2 px-2 sm:px-3 py-[7px] border-b border-border-subtle/50 text-xs transition-colors hover:bg-surface-hover/40 rounded-md"
             >
-              <span className="text-blue font-medium font-mono">
+              <span className="font-medium font-mono px-1.5 py-0.5 rounded bg-blue/15 text-blue text-[11px]">
                 ${token.symbol}
               </span>
               <span className="text-dim truncate flex-1">

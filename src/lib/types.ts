@@ -44,6 +44,28 @@ export interface TopMover {
 
 export type VolumeLevel = "dead" | "low" | "medium" | "high" | "extreme";
 
+export type TimeRange = "5m" | "30m" | "1h" | "4h" | "24h" | "2d" | "1w";
+
+export interface DefiLlamaVolume {
+  total24h: number;
+  total48hto24h: number;
+  total7d: number;
+  total30d: number;
+  change_1d: number;
+  change_7d: number;
+  change_1m: number;
+}
+
+export interface PlatformStats {
+  pumpfun: DefiLlamaVolume;
+  pumpswap: DefiLlamaVolume;
+  combined24h: number;
+  combined7d: number;
+  combinedChange1d: number;
+  solPrice: number;
+  timestamp: number;
+}
+
 export function getVolumeLevel(tradesPerMin: number): VolumeLevel {
   if (tradesPerMin < 5) return "dead";
   if (tradesPerMin < 20) return "low";

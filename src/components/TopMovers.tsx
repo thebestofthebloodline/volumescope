@@ -49,14 +49,14 @@ export function TopMovers({ trades }: TopMoversProps) {
   }, [trades]);
 
   return (
-    <div className="rounded-xl border border-border bg-surface flex flex-col">
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border">
-        <span className="text-[11px] text-muted">Top movers</span>
+    <div className="glass-card flex flex-col">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40">
+        <span className="text-[11px] text-muted uppercase tracking-wider">Top movers</span>
         <span className="text-[11px] text-dim">by volume</span>
       </div>
 
       <div className="px-3 sm:px-4 py-1">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-[10px] text-dim uppercase tracking-wider px-1 py-2 border-b border-border-subtle">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-[10px] text-dim uppercase tracking-wider px-1 py-2 border-b border-border-subtle/50">
           <span>Token</span>
           <span className="text-right">Vol</span>
           <span className="text-right">Txs</span>
@@ -68,13 +68,13 @@ export function TopMovers({ trades }: TopMoversProps) {
           return (
             <div
               key={m.mint}
-              className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-1 py-2.5 border-b border-border-subtle text-xs"
+              className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-1 py-2.5 border-b border-border-subtle/50 text-xs transition-colors hover:bg-surface-hover/40 rounded-md"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-dim text-[10px] font-mono w-4 shrink-0">
+                <span className="flex items-center justify-center w-5 h-5 rounded-md bg-accent/10 text-accent text-[10px] font-mono font-semibold shrink-0">
                   {i + 1}
                 </span>
-                <span className="text-foreground font-medium truncate">
+                <span className="text-accent font-medium truncate">
                   ${m.symbol}
                 </span>
                 <span className="text-dim text-[10px] font-mono hidden sm:inline">
