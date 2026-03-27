@@ -1,26 +1,123 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #e0e0e0;
+  --green: #00ff41;
+  --green-dim: #00aa2a;
+  --green-dark: #003d10;
+  --cyan: #00ffff;
+  --red: #ff3333;
+  --amber: #ffaa00;
+  --grid-color: rgba(0, 255, 65, 0.03);
+  --glow-intensity: 0;
+  --glow-color: var(--green);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-green: var(--green);
+  --color-green-dim: var(--green-dim);
+  --color-green-dark: var(--green-dark);
+  --color-cyan: var(--cyan);
+  --color-red: var(--red);
+  --color-amber: var(--amber);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #050505;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-mono), monospace;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -2px;
+  pointer-events: none;
+  z-index: 50;
+  border-radius: 0;
+  box-shadow: inset 0 0 80px rgba(0, 255, 65, calc(var(--glow-intensity) * 0.15)),
+    inset 0 0 160px rgba(0, 255, 65, calc(var(--glow-intensity) * 0.08)),
+    inset 0 0 240px rgba(0, 255, 65, calc(var(--glow-intensity) * 0.04));
+  transition: box-shadow 2s ease;
+}
+
+.glow-extreme::after {
+  box-shadow: inset 0 0 80px rgba(0, 255, 255, calc(var(--glow-intensity) * 0.2)),
+    inset 0 0 160px rgba(0, 255, 255, calc(var(--glow-intensity) * 0.12)),
+    inset 0 0 240px rgba(0, 255, 255, calc(var(--glow-intensity) * 0.06));
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.08), transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 49;
+}
+
+@keyframes flip-in {
+  0% { transform: rotateX(90deg); opacity: 0; }
+  100% { transform: rotateX(0); opacity: 1; }
+}
+
+.flip-digit {
+  display: inline-block;
+  animation: flip-in 0.3s ease-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.live-dot {
+  animation: blink 1s ease-in-out infinite;
+}
+
+.card {
+  background: rgba(10, 10, 10, 0.8);
+  border: 1px solid rgba(0, 255, 65, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.card:hover {
+  border-color: rgba(0, 255, 65, 0.25);
 }

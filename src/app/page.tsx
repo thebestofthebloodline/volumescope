@@ -1,64 +1,139 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Navbar } from "@/components/Navbar";
+import { Countdown } from "@/components/Countdown";
+import { StatsBar } from "@/components/StatsBar";
+import { VolumeChart } from "@/components/VolumeChart";
+import { LiveFeed } from "@/components/LiveFeed";
+import { VolumeHeatmap } from "@/components/VolumeHeatmap";
+import { TopMovers } from "@/components/TopMovers";
+import { NewTokensFeed } from "@/components/NewTokensFeed";
+import { usePumpPortal } from "@/hooks/usePumpPortal";
+import { useCountdown } from "@/hooks/useCountdown";
+import { getVolumeLevel, getGlowIntensity } from "@/lib/types";
 
 export default function Home() {
+  const { trades, newTokens, connected, tradesPerMin, tokensPerHour } =
+    usePumpPortal();
+  const { isLive, countdown, liveRemaining } = useCountdown();
+
+  const [solPrice, setSolPrice] = useState(0);
+  const [chartData, setChartData] = useState<number[]>([]);
+  const [heatmapData, setHeatmapData] = useState<number[]>(
+    new Array(24).fill(0)
+  );
+  const tradeCountRef = useRef(0);
+  const chartIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch SOL price
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/stats");
+        const data = await res.json();
+        if (data.solPrice) setSolPrice(data.solPrice);
+      } catch {
+        // silent
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Build chart data (trades per minute, sampled every 5 seconds)
+  useEffect(() => {
+    tradeCountRef.current = 0;
+
+    chartIntervalRef.current = setInterval(() => {
+      setChartData((prev) => {
+        const next = [...prev, tradesPerMin];
+        if (next.length > 60) next.shift();
+        return next;
+      });
+    }, 5000);
+
+    return () => {
+      if (chartIntervalRef.current) clearInterval(chartIntervalRef.current);
+    };
+  }, [tradesPerMin]);
+
+  // Build heatmap data
+  useEffect(() => {
+    if (trades.length === 0) return;
+
+    setHeatmapData((prev) => {
+      const next = [...prev];
+      const currentHour = new Date().getUTCHours();
+      next[currentHour] = tradesPerMin;
+      return next;
+    });
+  }, [trades.length, tradesPerMin]);
+
+  // Glow effect based on volume
+  const volumeLevel = getVolumeLevel(tradesPerMin);
+  const glowIntensity = getGlowIntensity(volumeLevel);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--glow-intensity",
+      String(glowIntensity)
+    );
+    if (volumeLevel === "extreme") {
+      document.body.classList.add("glow-extreme");
+    } else {
+      document.body.classList.remove("glow-extreme");
+    }
+  }, [glowIntensity, volumeLevel]);
+
+  // Estimate 24h volume from trades
+  const volume24h =
+    trades.reduce((sum, t) => sum + t.sol_amount, 0) * solPrice;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="relative z-10 min-h-screen flex flex-col">
+      <Navbar connected={connected} isLive={isLive} />
+
+      <main className="flex-1 mx-auto w-full max-w-[1400px] px-4 py-6 space-y-6">
+        {/* Countdown */}
+        <Countdown
+          isLive={isLive}
+          countdown={countdown}
+          liveRemaining={liveRemaining}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+        {/* Stats Bar */}
+        <StatsBar
+          volume24h={volume24h}
+          tradesPerMin={tradesPerMin}
+          tokensPerHour={tokensPerHour}
+          solPrice={solPrice}
+          volumeLevel={volumeLevel}
+        />
+
+        {/* Volume Chart */}
+        <VolumeChart dataPoints={chartData} />
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <LiveFeed trades={trades} />
+          <VolumeHeatmap tradeHistory={heatmapData} />
+        </div>
+
+        {/* Bottom Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TopMovers trades={trades} />
+          <NewTokensFeed tokens={newTokens} />
+        </div>
+
+        {/* Footer */}
+        <footer className="border-t border-green/5 py-6 text-center">
+          <p className="text-[10px] text-foreground/20 uppercase tracking-[0.2em]">
+            VOLUMESCOPE / Real-Time PumpFun Volume Terminal
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </footer>
       </main>
     </div>
   );
