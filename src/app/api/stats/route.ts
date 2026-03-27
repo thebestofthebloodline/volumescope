@@ -67,17 +67,17 @@ export async function GET() {
   }
 
   try {
-    const [solPrice, pumpfun] = await Promise.all([
+    const [solPrice, pumpswap] = await Promise.all([
       fetchSolPrice(),
-      fetchDefiLlamaVolume("pump.fun"),
+      fetchDefiLlamaVolume("pumpswap"),
     ]);
 
     const stats: PlatformStats = {
-      pumpfun,
-      pumpswap: { ...EMPTY_VOLUME },
-      combined24h: pumpfun.total24h,
-      combined7d: pumpfun.total7d,
-      combinedChange1d: pumpfun.change_1d,
+      pumpfun: { ...EMPTY_VOLUME },
+      pumpswap,
+      combined24h: pumpswap.total24h,
+      combined7d: pumpswap.total7d,
+      combinedChange1d: pumpswap.change_1d,
       solPrice,
       timestamp: now,
     };
@@ -86,10 +86,10 @@ export async function GET() {
     return NextResponse.json(stats);
   } catch {
     const fallback: PlatformStats = {
-      pumpfun: { ...EMPTY_VOLUME, total24h: 50_000_000 },
-      pumpswap: { ...EMPTY_VOLUME },
-      combined24h: 50_000_000,
-      combined7d: 350_000_000,
+      pumpfun: { ...EMPTY_VOLUME },
+      pumpswap: { ...EMPTY_VOLUME, total24h: 45_000_000 },
+      combined24h: 45_000_000,
+      combined7d: 315_000_000,
       combinedChange1d: 0,
       solPrice: 140,
       timestamp: now,
