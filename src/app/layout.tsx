@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -8,18 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VOLUMESCOPE | Real-Time PumpFun Volume Terminal",
+  title: "Volumescope | PumpFun Volume Tracker",
   description:
-    "Live memecoin volume tracker for PumpFun. Countdown to Memescope Monday. Real-time trades, volume heatmap, and market pulse.",
+    "Real-time volume tracker for PumpFun. Live trades, market pulse, and Memescope Monday countdown.",
   openGraph: {
-    title: "VOLUMESCOPE",
-    description: "Real-Time PumpFun Volume Terminal",
+    title: "Volumescope",
+    description: "Real-time PumpFun volume tracker",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VOLUMESCOPE",
-    description: "Real-Time PumpFun Volume Terminal",
+    title: "Volumescope",
+    description: "Real-time PumpFun volume tracker",
   },
 };
 
@@ -29,11 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistMono.variable} dark`}>
-      <body className="min-h-screen font-mono">
-        <div className="scanline" />
-        {children}
-      </body>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} dark`}
+    >
+      <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
 }

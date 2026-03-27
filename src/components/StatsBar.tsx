@@ -1,7 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Activity, Zap, Coins, DollarSign } from "lucide-react";
 import { formatUSD } from "@/lib/utils";
 import type { VolumeLevel } from "@/lib/types";
 
@@ -13,85 +11,64 @@ interface StatsBarProps {
   volumeLevel: VolumeLevel;
 }
 
-function StatCard({
-  icon: Icon,
+function Stat({
   label,
   value,
   sub,
 }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
   label: string;
   value: string;
   sub?: string;
 }) {
   return (
-    <div className="card rounded-lg px-4 py-3 flex-1 min-w-[160px]">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon size={12} className="text-green/50" />
-        <span className="text-[10px] uppercase tracking-[0.15em] text-foreground/40">
-          {label}
-        </span>
-      </div>
-      <motion.p
-        key={value}
-        initial={{ opacity: 0.5 }}
-        animate={{ opacity: 1 }}
-        className="text-xl sm:text-2xl font-bold text-green"
-      >
+    <div className="flex flex-col gap-1 min-w-0">
+      <span className="text-[11px] text-muted truncate">{label}</span>
+      <span className="text-lg sm:text-xl font-semibold font-mono tabular-nums text-foreground truncate">
         {value}
-      </motion.p>
-      {sub && <p className="text-[10px] text-foreground/30 mt-0.5">{sub}</p>}
+      </span>
+      {sub && <span className="text-[11px] text-dim truncate">{sub}</span>}
     </div>
   );
 }
 
-export function StatsBar({ volume24h, tradesPerMin, tokensPerHour, solPrice, volumeLevel }: StatsBarProps) {
+export function StatsBar({
+  volume24h,
+  tradesPerMin,
+  tokensPerHour,
+  solPrice,
+  volumeLevel,
+}: StatsBarProps) {
   const levelLabel: Record<VolumeLevel, string> = {
-    dead: "DEAD",
-    low: "LOW",
-    medium: "ACTIVE",
-    high: "HIGH",
-    extreme: "EXTREME",
+    dead: "Quiet",
+    low: "Low",
+    medium: "Active",
+    high: "High",
+    extreme: "Extreme",
   };
 
   const levelColor: Record<VolumeLevel, string> = {
-    dead: "text-foreground/30",
-    low: "text-green-dark",
-    medium: "text-green-dim",
-    high: "text-green",
-    extreme: "text-cyan",
+    dead: "text-dim",
+    low: "text-muted",
+    medium: "text-foreground",
+    high: "text-accent",
+    extreme: "text-accent",
   };
 
   return (
-    <div className="flex flex-wrap gap-3">
-      <StatCard
-        icon={Activity}
-        label="Volume 24H"
-        value={formatUSD(volume24h)}
-      />
-      <StatCard
-        icon={Zap}
-        label="Trades/Min"
-        value={String(tradesPerMin)}
-        sub={`Market: ${levelLabel[volumeLevel]}`}
-      />
-      <StatCard
-        icon={Coins}
-        label="New Tokens/H"
-        value={String(tokensPerHour)}
-      />
-      <StatCard
-        icon={DollarSign}
-        label="SOL Price"
-        value={`$${solPrice.toFixed(2)}`}
-      />
-      <div className="card rounded-lg px-4 py-3 min-w-[160px] flex flex-col items-center justify-center">
-        <span className="text-[10px] uppercase tracking-[0.15em] text-foreground/40 mb-1">
-          Market Pulse
-        </span>
-        <span className={`text-xl font-bold uppercase tracking-wider ${levelColor[volumeLevel]}`}>
-          {levelLabel[volumeLevel]}
-        </span>
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+        <Stat label="Volume (24h)" value={formatUSD(volume24h)} />
+        <Stat label="Trades / min" value={String(tradesPerMin)} />
+        <Stat label="New tokens / hr" value={String(tokensPerHour)} />
+        <Stat label="SOL" value={`$${solPrice.toFixed(2)}`} />
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] text-muted">Market pulse</span>
+          <span
+            className={`text-lg sm:text-xl font-semibold ${levelColor[volumeLevel]}`}
+          >
+            {levelLabel[volumeLevel]}
+          </span>
+        </div>
       </div>
     </div>
   );

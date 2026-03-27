@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { TrendingUp } from "lucide-react";
 import { shortenAddress, formatNumber } from "@/lib/utils";
 import type { Trade } from "@/lib/types";
 
@@ -50,23 +49,18 @@ export function TopMovers({ trades }: TopMoversProps) {
   }, [trades]);
 
   return (
-    <div className="card rounded-lg flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-green/10">
-        <div className="flex items-center gap-2">
-          <TrendingUp size={12} className="text-green/50" />
-          <span className="text-[10px] uppercase tracking-[0.15em] text-foreground/40">
-            Top Movers
-          </span>
-        </div>
-        <span className="text-[10px] text-green/40">BY VOLUME</span>
+    <div className="rounded-xl border border-border bg-surface flex flex-col">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border">
+        <span className="text-[11px] text-muted">Top movers</span>
+        <span className="text-[11px] text-dim">by volume</span>
       </div>
 
-      <div className="px-3 py-2">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-0 text-[10px] text-foreground/30 uppercase tracking-wider px-1 py-1.5 border-b border-white/[0.03]">
+      <div className="px-3 sm:px-4 py-1">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-[10px] text-dim uppercase tracking-wider px-1 py-2 border-b border-border-subtle">
           <span>Token</span>
-          <span className="text-right">Volume</span>
-          <span className="text-right">Trades</span>
-          <span className="text-right">B/S</span>
+          <span className="text-right">Vol</span>
+          <span className="text-right">Txs</span>
+          <span className="text-right w-16">B / S</span>
         </div>
 
         {movers.map((m, i) => {
@@ -74,39 +68,45 @@ export function TopMovers({ trades }: TopMoversProps) {
           return (
             <div
               key={m.mint}
-              className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center px-1 py-2 border-b border-white/[0.02] text-xs"
+              className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-1 py-2.5 border-b border-border-subtle text-xs"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-foreground/20 text-[10px] w-4">{i + 1}</span>
-                <span className="text-green font-bold truncate">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-dim text-[10px] font-mono w-4 shrink-0">
+                  {i + 1}
+                </span>
+                <span className="text-foreground font-medium truncate">
                   ${m.symbol}
                 </span>
-                <span className="text-foreground/15 text-[10px] hidden sm:inline">
+                <span className="text-dim text-[10px] font-mono hidden sm:inline">
                   {shortenAddress(m.mint)}
                 </span>
               </div>
-              <span className="text-foreground/60 tabular-nums text-right">
-                {formatNumber(m.volume)} SOL
+              <span className="font-mono text-muted tabular-nums text-right">
+                {formatNumber(m.volume)}
               </span>
-              <span className="text-foreground/40 tabular-nums text-right">
+              <span className="font-mono text-dim tabular-nums text-right">
                 {m.trades}
               </span>
-              <div className="flex items-center gap-1 justify-end">
-                <span className="text-green text-[10px] tabular-nums">{m.buys}</span>
-                <div className="w-8 h-1.5 bg-red/30 rounded-full overflow-hidden">
+              <div className="flex items-center gap-1.5 justify-end w-16">
+                <span className="text-accent text-[10px] font-mono tabular-nums">
+                  {m.buys}
+                </span>
+                <div className="w-6 h-1 bg-negative/20 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-green rounded-full"
+                    className="h-full bg-accent rounded-full transition-all"
                     style={{ width: `${buyRatio * 100}%` }}
                   />
                 </div>
-                <span className="text-red text-[10px] tabular-nums">{m.sells}</span>
+                <span className="text-negative text-[10px] font-mono tabular-nums">
+                  {m.sells}
+                </span>
               </div>
             </div>
           );
         })}
 
         {movers.length === 0 && (
-          <div className="flex items-center justify-center py-8 text-foreground/20 text-xs">
+          <div className="flex items-center justify-center py-10 text-dim text-xs">
             Collecting data...
           </div>
         )}

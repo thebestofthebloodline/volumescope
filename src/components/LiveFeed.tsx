@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { shortenAddress } from "@/lib/utils";
 import type { Trade } from "@/lib/types";
 
@@ -13,43 +12,37 @@ export function LiveFeed({ trades }: LiveFeedProps) {
   const displayTrades = trades.slice(0, 50);
 
   return (
-    <div className="card rounded-lg flex flex-col h-[400px]">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-green/10">
-        <span className="text-[10px] uppercase tracking-[0.15em] text-foreground/40">
-          Live Feed
-        </span>
+    <div className="rounded-xl border border-border bg-surface flex flex-col h-[380px]">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border">
+        <span className="text-[11px] text-muted">Live trades</span>
         <div className="flex items-center gap-1.5">
-          <div className="h-1.5 w-1.5 rounded-full bg-green live-dot" />
-          <span className="text-[10px] text-green/50">STREAMING</span>
+          <div className="h-1.5 w-1.5 rounded-full bg-accent live-dot" />
+          <span className="text-[11px] text-dim">streaming</span>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1">
+      <div className="flex-1 overflow-y-auto px-2 py-1">
         <AnimatePresence initial={false}>
           {displayTrades.map((trade, i) => (
             <motion.div
               key={`${trade.signature}-${i}`}
-              initial={{ opacity: 0, x: -20, height: 0 }}
-              animate={{ opacity: 1, x: 0, height: "auto" }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 px-2 py-1.5 border-b border-white/[0.02] text-xs"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-2 px-2 sm:px-3 py-[7px] border-b border-border-subtle text-xs"
             >
-              {trade.is_buy ? (
-                <ArrowUpRight size={12} className="text-green shrink-0" />
-              ) : (
-                <ArrowDownRight size={12} className="text-red shrink-0" />
-              )}
-              <span className={`font-bold ${trade.is_buy ? "text-green" : "text-red"}`}>
+              <span
+                className={`font-mono font-medium w-8 ${trade.is_buy ? "text-accent" : "text-negative"}`}
+              >
                 {trade.is_buy ? "BUY" : "SELL"}
               </span>
-              <span className="text-foreground/50 truncate max-w-[80px]">
+              <span className="text-foreground font-medium truncate max-w-[90px]">
                 {trade.symbol || shortenAddress(trade.mint)}
               </span>
-              <span className="ml-auto text-foreground/60 tabular-nums">
+              <span className="ml-auto font-mono text-muted tabular-nums">
                 {trade.sol_amount.toFixed(2)} SOL
               </span>
-              <span className="text-foreground/20 text-[10px] tabular-nums w-[32px] text-right">
+              <span className="font-mono text-dim text-[10px] tabular-nums w-8 text-right">
                 {Math.floor((Date.now() - trade.timestamp) / 1000)}s
               </span>
             </motion.div>
@@ -57,7 +50,7 @@ export function LiveFeed({ trades }: LiveFeedProps) {
         </AnimatePresence>
 
         {displayTrades.length === 0 && (
-          <div className="flex items-center justify-center h-full text-foreground/20 text-xs">
+          <div className="flex items-center justify-center h-full text-dim text-xs">
             Waiting for trades...
           </div>
         )}
