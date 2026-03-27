@@ -79,9 +79,9 @@ export default function Home() {
   const liveVolumeUSD =
     filteredTrades.reduce((sum, t) => sum + t.sol_amount, 0) * solPrice;
 
-  // For sub-24h ranges, use only live trades. For 24h+, use DefiLlama + live.
+  // Sub-24h: live trades only. 24h+: DefiLlama only (already includes recent volume)
   const isSubDay = ["5m", "30m", "1h", "4h"].includes(timeRange);
-  const displayVolume = isSubDay ? liveVolumeUSD : defiLlamaVolume + liveVolumeUSD;
+  const displayVolume = isSubDay ? liveVolumeUSD : defiLlamaVolume;
 
   const volumeChange = platformStats?.combinedChange1d ?? 0;
 
