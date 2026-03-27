@@ -6,6 +6,7 @@ import type { Trade, NewToken } from "@/lib/types";
 const WS_URL = "wss://pumpportal.fun/api/data";
 const MAX_TRADES = 200;
 const MAX_TOKENS = 100;
+const MAX_SUBSCRIPTIONS = 50;
 
 export function usePumpPortal() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -18,6 +19,7 @@ export function usePumpPortal() {
   const tradeTimestamps = useRef<number[]>([]);
   const tokenTimestamps = useRef<number[]>([]);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const subscribedMints = useRef<string[]>([]);
 
   const calcRates = useCallback(() => {
     const now = Date.now();
@@ -35,6 +37,33 @@ export function usePumpPortal() {
     setTokensPerHour(tokenTimestamps.current.length);
   }, []);
 
+  const subscribeToToken = useCallback((mint: string) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    // Unsubscribe oldest if we hit the cap
+    if (subscribedMints.current.length >= MAX_SUBSCRIPTIONS) {
+      const oldMints = subscribedMints.current.splice(
+        0,
+        10
+      );
+      ws.send(
+        JSON.stringify({
+          method: "unsubscribeTokenTrade",
+          keys: oldMints,
+        })
+      );
+    }
+
+    subscribedMints.current.push(mint);
+    ws.send(
+      JSON.stringify({
+        method: "subscribeTokenTrade",
+        keys: [mint],
+      })
+    );
+  }, []);
+
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
@@ -44,19 +73,34 @@ export function usePumpPortal() {
 
       ws.onopen = () => {
         setConnected(true);
+        subscribedMints.current = [];
+        // Subscribe to new token creations
         ws.send(JSON.stringify({ method: "subscribeNewToken" }));
-        ws.send(
-          JSON.stringify({
-            method: "subscribeTokenTrade",
-            keys: [],
-          })
-        );
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           const now = Date.now();
+
+          if (data.txType === "create") {
+            const token: NewToken = {
+              signature: data.signature || "",
+              mint: data.mint || "",
+              name: data.name || "Unknown",
+              symbol: data.symbol || "???",
+              uri: data.uri,
+              timestamp: now,
+            };
+
+            tokenTimestamps.current.push(now);
+            setNewTokens((prev) => [token, ...prev].slice(0, MAX_TOKENS));
+
+            // Subscribe to trades on this new token
+            if (data.mint) {
+              subscribeToToken(data.mint);
+            }
+          }
 
           if (data.txType === "buy" || data.txType === "sell") {
             const trade: Trade = {
@@ -74,20 +118,6 @@ export function usePumpPortal() {
             tradeTimestamps.current.push(now);
             setTrades((prev) => [trade, ...prev].slice(0, MAX_TRADES));
           }
-
-          if (data.txType === "create") {
-            const token: NewToken = {
-              signature: data.signature || "",
-              mint: data.mint || "",
-              name: data.name || "Unknown",
-              symbol: data.symbol || "???",
-              uri: data.uri,
-              timestamp: now,
-            };
-
-            tokenTimestamps.current.push(now);
-            setNewTokens((prev) => [token, ...prev].slice(0, MAX_TOKENS));
-          }
         } catch {
           // skip malformed messages
         }
@@ -104,7 +134,7 @@ export function usePumpPortal() {
     } catch {
       reconnectTimeout.current = setTimeout(connect, 5000);
     }
-  }, []);
+  }, [subscribeToToken]);
 
   useEffect(() => {
     connect();
