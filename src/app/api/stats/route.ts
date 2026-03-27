@@ -67,29 +67,17 @@ export async function GET() {
   }
 
   try {
-    const [solPrice, pumpfun, pumpswap] = await Promise.all([
+    const [solPrice, pumpfun] = await Promise.all([
       fetchSolPrice(),
       fetchDefiLlamaVolume("pump.fun"),
-      fetchDefiLlamaVolume("pumpswap"),
     ]);
-
-    const combined24h = pumpfun.total24h + pumpswap.total24h;
-    const combined7d = pumpfun.total7d + pumpswap.total7d;
-
-    // Weighted average of change_1d based on each platform's contribution
-    const totalPrev24h =
-      (pumpfun.total48hto24h || pumpfun.total24h) +
-      (pumpswap.total48hto24h || pumpswap.total24h);
-    const combinedChange1d = totalPrev24h > 0
-      ? ((combined24h - totalPrev24h) / totalPrev24h) * 100
-      : 0;
 
     const stats: PlatformStats = {
       pumpfun,
-      pumpswap,
-      combined24h,
-      combined7d,
-      combinedChange1d,
+      pumpswap: { ...EMPTY_VOLUME },
+      combined24h: pumpfun.total24h,
+      combined7d: pumpfun.total7d,
+      combinedChange1d: pumpfun.change_1d,
       solPrice,
       timestamp: now,
     };
@@ -98,10 +86,10 @@ export async function GET() {
     return NextResponse.json(stats);
   } catch {
     const fallback: PlatformStats = {
-      pumpfun: { ...EMPTY_VOLUME, total24h: 30_000_000 },
-      pumpswap: { ...EMPTY_VOLUME, total24h: 15_000_000 },
-      combined24h: 45_000_000,
-      combined7d: 315_000_000,
+      pumpfun: { ...EMPTY_VOLUME, total24h: 50_000_000 },
+      pumpswap: { ...EMPTY_VOLUME },
+      combined24h: 50_000_000,
+      combined7d: 350_000_000,
       combinedChange1d: 0,
       solPrice: 140,
       timestamp: now,
